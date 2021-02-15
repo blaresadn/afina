@@ -1,0 +1,3 @@
+/home/camila/afina/src/storage/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/camila/afina/src/storage/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/camila/afina/src/storage/cmake-build-debug/CMakeFiles/Storage.dir

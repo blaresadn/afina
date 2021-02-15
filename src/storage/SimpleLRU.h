@@ -17,11 +17,18 @@ namespace Backend {
  */
 class SimpleLRU : public Afina::Storage {
 public:
-    SimpleLRU(size_t max_size = 1024) : _max_size(max_size) {}
+    SimpleLRU(size_t max_size = 1024) : _max_size(max_size), free_mem(max_size) {}
 
     ~SimpleLRU() {
         _lru_index.clear();
-        _lru_head.reset(); // TODO: Here is stack overflow
+        if (_lru_head != nullptr) {
+            while (_lru_end->prev != nullptr) {
+                lru_node *cur_node = _lru_end;
+                _lru_end = _lru_end->prev;
+                cur_node->prev->next = nullptr;
+            }
+            _lru_head = nullptr;
+        }
     }
 
     // Implements Afina::Storage interface
@@ -44,22 +51,31 @@ private:
     using lru_node = struct lru_node {
         std::string key;
         std::string value;
-        std::unique_ptr<lru_node> prev;
+        lru_node *prev;
         std::unique_ptr<lru_node> next;
     };
 
     // Maximum number of bytes could be stored in this cache.
     // i.e all (keys+values) must be not greater than the _max_size
     std::size_t _max_size;
+    size_t free_mem;
 
     // Main storage of lru_nodes, elements in this list ordered descending by "freshness": in the head
     // element that wasn't used for longest time.
     //
     // List owns all nodes
-    std::unique_ptr<lru_node> _lru_head;
+    std::unique_ptr<lru_node> _lru_head = nullptr;
+    lru_node *_lru_end = nullptr;
 
     // Index of nodes from list above, allows fast random access to elements by lru_node#key
-    std::map<std::reference_wrapper<std::string>, std::reference_wrapper<lru_node>, std::less<std::string>> _lru_index;
+    std::map<std::reference_wrapper<const std::string>, std::reference_wrapper<lru_node>,
+            std::less<std::string>> _lru_index;
+
+    bool PrPut(const std::string &key, const std::string &value);
+
+    typedef std::_Rb_tree_iterator<std::pair<const std::reference_wrapper<const std::basic_string<char>>,
+                std::reference_wrapper<lru_node>>> KeyIt;
+    bool PrDelete(KeyIt key);
 };
 
 } // namespace Backend
