@@ -76,6 +76,8 @@ private:
     typedef std::_Rb_tree_iterator<std::pair<const std::reference_wrapper<const std::basic_string<char>>,
                 std::reference_wrapper<lru_node>>> KeyIt;
     bool PrDelete(KeyIt key);
+
+    bool NewHead(lru_node *ptr);
 };
 
 } // namespace Backend

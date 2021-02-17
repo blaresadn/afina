@@ -55,6 +55,24 @@ bool SimpleLRU::PrPut(const std::string &key, const std::string &value)
     return true;
 }
 
+bool SimpleLRU::NewHead(lru_node *ptr)
+{
+    if (ptr->prev != nullptr) {
+        _lru_head->prev = ptr;
+        if (ptr->next != nullptr) {
+            ptr->next->prev = ptr->prev;
+        } else {
+            _lru_end = ptr->prev;
+        }
+        auto tmp = std::move(_lru_head);
+        _lru_head = std::move(ptr->prev->next);
+        ptr->prev->next = std::move(ptr->next);
+        ptr->next = std::move(tmp);
+        ptr->prev = nullptr;
+    }
+    return true;
+}
+
 // See MapBasedGlobalLockImpl.h
 bool SimpleLRU::Put(const std::string &key, const std::string &value)
 {
@@ -81,8 +99,16 @@ bool SimpleLRU::Set(const std::string &key, const std::string &value)
     if (result == _lru_index.end()) {
         return false;
     }
-    PrDelete(result);
-    return PrPut(key, value);
+    auto ptr = &(result->second).get();
+    if (ptr->key.size() + value.size() > _max_size) {
+        return false;
+    }
+    while (free_mem + ptr->value.size() < value.size()) {
+        Delete(_lru_end->key);
+    }
+    free_mem -= value.size();
+    ptr->value = value;
+    return NewHead(ptr);
 }
 
 // See MapBasedGlobalLockImpl.h
@@ -102,8 +128,9 @@ bool SimpleLRU::Get(const std::string &key, std::string &value)
     if (result == _lru_index.end()) {
         return false;
     }
-    value = (result->second).get().value;
-    return true;
+    auto ptr = &(result->second).get();
+    value = ptr->value;
+    return NewHead(ptr);
 }
 
 } // namespace Backend
