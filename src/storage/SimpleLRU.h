@@ -53,6 +53,8 @@ namespace Afina {
                 std::string value;
                 lru_node *prev;
                 std::unique_ptr<lru_node> next;
+
+                lru_node(const std::string &key): key(key) {}
             };
 
             using backend_type = std::map<std::reference_wrapper<const std::string>, std::reference_wrapper<lru_node>>;
@@ -72,7 +74,7 @@ namespace Afina {
 
             // Index of nodes from list above, allows fast random access to elements by lru_node#key
             std::map<std::reference_wrapper<const std::string>, std::reference_wrapper<lru_node>,
-            std::less<>> _lru_index;
+                        std::less<std::string>> _lru_index;
 
             // Private backend methods
             bool _put(const std::string &key, const std::string &value);

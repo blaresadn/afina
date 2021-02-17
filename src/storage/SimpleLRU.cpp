@@ -35,8 +35,7 @@ namespace Afina {
                 Delete(_lru_end->key);
             }
             free_mem -= cur_size;
-            auto new_node = new lru_node;
-            new_node->key = key;
+            auto new_node = new lru_node(key);
             new_node->value = value;
             new_node->prev = nullptr;
             if (_lru_head != nullptr) {
@@ -89,7 +88,7 @@ namespace Afina {
             }
             auto result = _lru_index.find(key);
             if (result != _lru_index.end()) {
-                return _set(&(result->second).get());
+                return _set(&(result->second).get(), value);
             }
             return _put(key, value);
         }
