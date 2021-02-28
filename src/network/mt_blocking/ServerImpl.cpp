@@ -79,8 +79,8 @@ void ServerImpl::Start(uint16_t port, uint32_t n_accept, uint32_t n_workers) {
 // See Server.h
 void ServerImpl::Stop() {
     {
-        running.store(false);
         std::lock_guard<std::mutex> guard(m);
+        running.store(false);
         for (int client_socket: client_sockets) {
             shutdown(client_socket, SHUT_RD);
         }
